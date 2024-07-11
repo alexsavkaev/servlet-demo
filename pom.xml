@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>ru.savkaev</groupId>
-    <artifactId>notes</artifactId>
+    <artifactId>demo</artifactId>
     <version>1.0-SNAPSHOT</version>
     <name>notes</name>
     <packaging>war</packaging>

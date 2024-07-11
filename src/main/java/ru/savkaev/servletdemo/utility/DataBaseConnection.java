@@ -20,7 +20,7 @@ public class DataBaseConnection implements AutoCloseable {
             connection = DriverManager.getConnection(url, user, password);
             log.info("Database connected");
         } catch (SQLException | ClassNotFoundException e) {
-            e.printStackTrace();
+            log.error("Failed to connect to database", e);
         }
     }
 

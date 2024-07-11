@@ -42,7 +42,7 @@ public class NotesServlet extends HttpServlet {
             writeResponse(notes, response, objectMapper);
         } else {
 
-            log.info("Get note: {}", request.getParameter("id"));
+            log.info("Get note with id: {}", request.getParameter("id"));
             NoteDTO note = notesService.findById(Long.parseLong(id));
             writeResponse(note, response, objectMapper);
         }
@@ -53,6 +53,8 @@ public class NotesServlet extends HttpServlet {
         NoteDTO note = objectMapper.readValue(request.getReader(), NoteDTO.class);
 
         Long noteId = Long.parseLong(request.getParameter("id"));
+
+        log.info("Update note with id: {}", noteId);
 
         NoteDTO updatedNote = notesService.update(noteId, note);
         writeResponse(updatedNote, response, objectMapper);

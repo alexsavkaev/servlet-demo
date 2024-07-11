@@ -26,12 +26,18 @@ public class NotesService {
     }
 
     public NoteDTO update(Long noteId, NoteDTO note) {
-        Note updatedNote = NoteMapper.mapToNote(note);
         Note oldNote = notesRepository.findById(noteId);
-        updatedNote.setCreationDate(oldNote.getCreationDate());
-        updatedNote.setUpdateDate(LocalDateTime.now());
+        if(oldNote != null)
+        {
 
-        return NoteMapper.mapToDTO(notesRepository.update(updatedNote, noteId));
+            Note updatedNote = NoteMapper.mapToNote(note);
+            updatedNote.setCreationDate(oldNote.getCreationDate());
+            updatedNote.setUpdateDate(LocalDateTime.now());
+            return NoteMapper.mapToDTO(notesRepository.update(updatedNote, noteId));
+
+        }
+        log.error("Note with id: {} not found", noteId);
+        return null;
     }
 
     public NoteDTO create(NoteDTO note) {
