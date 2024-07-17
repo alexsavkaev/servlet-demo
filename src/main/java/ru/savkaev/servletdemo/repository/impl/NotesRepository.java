@@ -19,6 +19,11 @@ import java.util.Optional;
 @Slf4j
 public class NotesRepository implements iNotesRepository {
 
+    /**
+     * Сохраняет заметку
+     * @param note заметка для сохранения
+     * @return сохраненная заметка
+     */
     @Override
     public Note create(Note note) {
         try (DataBaseConnection connection = new DataBaseConnection()) {
@@ -53,8 +58,15 @@ public class NotesRepository implements iNotesRepository {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-        return note;
+        return findById(note.getId());
     }
+
+    /**
+     * Изменить заметку.
+     * @param note Обновленая заметка
+     * @param noteId id заметки
+     * @return Обновленная заметка. Если что-то пошло не так, возвращается null
+     */
 
     @Override
     public Note update(Note note, Long noteId) {
@@ -80,8 +92,14 @@ public class NotesRepository implements iNotesRepository {
         } catch (Exception e) {
             log.error("Failed to update note", e);
         }
-        return note;
+        return null;
     }
+
+    /**
+     * Удалить заметку
+     *
+     * @param id id заметки
+     */
 
     @Override
     public void delete(Long id) {
@@ -103,6 +121,12 @@ public class NotesRepository implements iNotesRepository {
         }
 
     }
+
+    /**
+     * Поиск заметки по id
+     * @param id id
+     * @return Note заметка. Если заметка не найдена - null
+     */
 
     @Override
     public Note findById(Long id) {
@@ -129,6 +153,11 @@ public class NotesRepository implements iNotesRepository {
         return null;
     }
 
+    /**
+     * Поиск всех заметок
+     * @return List<Note> список всех заметок. Если заметок нет - пустой список
+     */
+
     @Override
     public List<Note> findAll() {try (DataBaseConnection connection = new DataBaseConnection()) {
         connection.connect(
@@ -148,8 +177,44 @@ public class NotesRepository implements iNotesRepository {
     } catch (Exception e) {
         log.error("Failed to find all notes", e);
         return Collections.emptyList();
-    }}
+    }
+    }
 
+    /**
+     * Поиск заметок по автору.
+     * @param user имя автора
+     * @return List<Note> список заметок искомого автора, если не найдено - пустой список
+     */
+
+    public List<Note> findByCreatedBy(String user) {
+        try (DataBaseConnection connection = new DataBaseConnection()) {
+            connection.connect(
+                    "jdbc:postgresql://localhost:5432/postgres",
+                    "postgres",
+                    "12345"
+            );
+            String query = "SELECT * FROM notes WHERE created_by = ?";
+            try (PreparedStatement statement = connection.getConnection().prepareStatement(query)) {
+                statement.setString(1, user);
+                ResultSet resultSet = statement.executeQuery();
+                List<Note> notes = new ArrayList<>();
+                while (resultSet.next()) {
+                    notes.add(extractNoteFromResultSet(resultSet));
+                }
+                return notes;
+            }
+        } catch (Exception e) {
+            log.error("Failed to find all notes by author", e);
+            return Collections.emptyList();
+        }
+    }
+
+    /**
+     * Извлекает Note из ResultSet
+     * @param resultSet Ответ от БД
+     * @return Note
+     * @throws SQLException если в ResultSet нет данных по запрашиваемому полю
+     */
     private Note extractNoteFromResultSet(ResultSet resultSet) throws SQLException {
         Note note = new Note();
         note.setId(resultSet.getLong("id"));

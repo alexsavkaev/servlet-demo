@@ -10,7 +10,9 @@ import java.sql.SQLException;
 
 @Slf4j
 @Getter
-
+/**
+ * Подключение к базе данных. Импорт драйвера PostgreSQL
+ */
 public class DataBaseConnection implements AutoCloseable {
 
     private Connection connection;
@@ -24,7 +26,10 @@ public class DataBaseConnection implements AutoCloseable {
         }
     }
 
-
+    /**
+     * Закрывает подключение к базе для очистки ресурсов
+     * @throws Exception если произошла ошибка
+     */
     @Override
     public void close() throws Exception {
         if(connection != null) {

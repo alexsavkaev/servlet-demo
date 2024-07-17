@@ -9,15 +9,23 @@ import jakarta.servlet.http.*;
 import jakarta.servlet.annotation.*;
 import lombok.extern.slf4j.Slf4j;
 import ru.savkaev.servletdemo.dto.NoteDTO;
+import ru.savkaev.servletdemo.repository.iNotesRepository;
+import ru.savkaev.servletdemo.repository.impl.NotesRepository;
 import ru.savkaev.servletdemo.service.NotesService;
 import ru.savkaev.servletdemo.utility.DataBaseInit;
 
+/**
+ * Сервлет для работы с заметками
+ */
 @Slf4j
 @WebServlet(name = "helloServlet", value = "/notes")
 public class NotesServlet extends HttpServlet {
-    private final NotesService notesService = new NotesService();
+    private final NotesService notesService = new NotesService(new NotesRepository() {
+    });
 
-
+    /**
+     * Запускает сервлет
+     */
     public void init() {
         DataBaseInit dataBaseInit = new DataBaseInit(
                 "jdbc:postgresql://localhost:5432/postgres",
@@ -32,21 +40,45 @@ public class NotesServlet extends HttpServlet {
 
         log.info("Servlet initialized");
     }
+
+    /**
+     * Обрабатывает GET запросы. Выводит все заметки, заметку по id или заметки по создателю
+     * @param request an {@link HttpServletRequest} объект, содержащий параметры запроса к сервлету
+     *
+     * @param response an {@link HttpServletResponse} объект, содержащий параметры ответа от сервлета
+     *
+     * @throws IOException если произошла ошибка ввода-вывода
+     */
     @Override
     public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
         String id = request.getParameter("id");
+        String createdBy = request.getParameter("createdBy");
         ObjectMapper objectMapper = new ObjectMapper();
-        if (id == null) {
-            log.info("Get all notes");
-            List<NoteDTO> notes = notesService.findAll();
-            writeResponse(notes, response, objectMapper);
-        } else {
-
+        if (id != null) {
             log.info("Get note with id: {}", request.getParameter("id"));
             NoteDTO note = notesService.findById(Long.parseLong(id));
             writeResponse(note, response, objectMapper);
+
+        } else if(createdBy != null) {
+            log.info("Get notes created by: {}", createdBy);
+            List<NoteDTO> notes = notesService.findByCreatedBy(createdBy);
+            writeResponse(notes, response, objectMapper);
+        } else {
+            log.info("Get all notes");
+            List<NoteDTO> notes = notesService.findAll();
+            writeResponse(notes, response, objectMapper);
         }
     }
+
+    /**
+     * Обрабатывает PUT запросы. Обновляет заметку по id в параметрах запроса, если такая заметка существует.
+     * Извлекает обновленные данные из тела запроса.
+     * @param request an {@link HttpServletRequest} объект, содержащий параметры запроса к сервлету
+     *
+     * @param response an {@link HttpServletResponse} объект, содержащий параметры ответа от сервлета
+     *
+     * @throws IOException если произошла ошибка ввода-вывода
+     */
     @Override
     public void doPut(HttpServletRequest request, HttpServletResponse response) throws IOException {
         ObjectMapper objectMapper = new ObjectMapper();
@@ -60,6 +92,14 @@ public class NotesServlet extends HttpServlet {
         writeResponse(updatedNote, response, objectMapper);
     }
 
+    /**
+     * Обрабатывает POST запросы. Создает новую заметку. Извлекает данные из тела запроса.
+     * @param request an {@link HttpServletRequest} объект, содержащий параметры запроса к сервлету
+     *
+     * @param response an {@link HttpServletResponse} объект, содержащий параметры ответа от сервлета
+     *
+     * @throws IOException  если произошла ошибка ввода-вывода
+     */
     @Override
     public void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
         log.info("Creating note.");
@@ -75,17 +115,39 @@ public class NotesServlet extends HttpServlet {
             writeResponse("Failed to create note", response, objectMapper);
         }
     }
+
+    /**
+     * Обрабатывает DELETE запросы. Удаляет заметку по id.
+     * @param request an {@link HttpServletRequest} объект, содержащий параметры запроса к сервлету
+     *
+     * @param response an {@link HttpServletResponse} объект, содержащий параметры ответа от сервлета
+     *
+     * @throws IOException если произошла ошибка ввода-вывода
+     */
     @Override
     public void doDelete(HttpServletRequest request, HttpServletResponse response) throws IOException {
         long id = Long.parseLong(request.getParameter("id"));
         notesService.delete(id);
     }
 
+    /**
+     * Вызывается при завершении работы сервлета
+     *
+     */
     @Override
     public void destroy() {
         log.info("Servlet destroyed");
     }
-    public void writeResponse(Object object, HttpServletResponse response, ObjectMapper objectMapper) throws IOException {
+
+    /**
+     * Записывает объект в поток вывода сервлета
+     * @param object объект для записи
+     * @param response ответ сервлета
+     * @param objectMapper объект для сериализации
+     * @throws IOException если произошла ошибка ввода-вывода
+     */
+    public void writeResponse(Object object, HttpServletResponse response, ObjectMapper objectMapper) throws IOException
+    {
         String json = objectMapper.writeValueAsString(object);
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");

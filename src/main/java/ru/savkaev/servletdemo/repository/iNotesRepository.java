@@ -14,4 +14,6 @@ public interface iNotesRepository {
     Note findById(Long id);
 
     List<Note> findAll();
+
+    List<Note> findByCreatedBy(String createdBy);
 }
